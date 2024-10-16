@@ -1389,6 +1389,15 @@ func (r *DiskSubresource) Read(l object.VirtualDeviceList) error {
 	if r.Get("attach") != nil {
 		attach = r.Get("attach").(bool)
 	}
+
+	// For now we have problem with RDM disks via LUN,
+	// So you can create a VM, then attach these disks, and write lifecycle_policy to ignore disk.1,...
+	// you can change info on terraform-defined disks and vm, it will apply
+	// you should disconnect ignored disks before destroying or recreating VM, as terraform will try to remove
+	// these ignored disks and will fail (may or may not remove the VM)
+	if _, ok := disk.Backing.(*types.VirtualDiskRawDiskMappingVer1BackingInfo); ok {
+		return nil
+	}
 	// Save disk backing settings
 	b, ok := disk.Backing.(*types.VirtualDiskFlatVer2BackingInfo)
 	if !ok {
